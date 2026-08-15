@@ -1,5 +1,14 @@
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import cos_sim
+
+#loads the variables from .env
+load_dotenv()
+#means:"Python, give me the value stored under OPENAI_API_KEY."
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def load_doc(file_path):
     with open(file_path) as file:
@@ -18,7 +27,7 @@ chunks = chunk_text(text)
 model = SentenceTransformer("all-MiniLM-L6-v2")
 embeddings = model.encode(chunks)
 
-question = "What is the tallest sunflower?"
+question = input("Ask a question: ")
 question_embedding = model.encode(question)
 
 results = []
@@ -29,10 +38,6 @@ for i in range(len(chunks)):
 ranked_result = sorted(results, reverse=True)
 top_results = ranked_result[:3]
 
-# for score, index in top_results:
-#     print(score)
-#     print(chunks[index])
-#     print("--------")
 
 context = ""
 for score, index in top_results:
@@ -44,4 +49,9 @@ Answer the question using only the context below.
 Question: {question}
 Context: {context}
 """
-print(prompt)
+
+response = client.responses.create(
+    model="gpt-5-mini",
+    input=prompt
+)
+print(response.output_text)
